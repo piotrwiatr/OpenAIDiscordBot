@@ -26,11 +26,22 @@ def spliceText(message):
 
 def sendTextRequest(message):
     text = message.split("<@1049857759643971685> text")
-    response = openai.Completion.create(model="text-davinci-003",
-                                        prompt=text[1],
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
+                                        messages=[{"role": "user", "content": text[1]}],
                                         temperature=0.9,
                                         max_tokens=4000)
-    return spliceText(response['choices'][0]['text'])
+    response = response["choices"][0]["message"]["content"]
+    return spliceText(response)
+
+def sendCodeRequest(message):
+    text = message.split("<@1049857759643971685> code")
+    response = openai.Completion.create(model="code-davinci-002",
+                                        prompt=text[1],
+                                        max_tokens=2000,
+                                        temperature=0
+                                        )
+    response = response["choices"][0]["text"]
+    return spliceText(response) 
 
 
 def sendImageRequest(message):
@@ -63,9 +74,14 @@ async def on_message(message):
         messageToSend = sendImageRequest(message.content)
         await message.channel.send(messageToSend)
 
+    elif message.content.startswith('<@1049857759643971685> code'):
+        messagesToSend = sendCodeRequest(message.content)
+        for msg in messagesToSend:
+            await message.channel.send(msg)
+
     elif message.content.startswith('<@1049857759643971685> help'):
         await message.channel.send(
-            "Hello, I\'m a custom discord bot that uses the OpenAI api to generate text and images. To generate text, please type the following command: \n<@1049857759643971685> text {prompt}.\nTo generate an image, please type the following command: \n<@1049857759643971685> image {prompt}"
+            "Hello, I\'m a custom discord bot that uses the OpenAI api to generate text and images. To generate text, please type the following command: \n<@1049857759643971685> text {prompt}.\nTo generate an image, please type the following command: \n<@1049857759643971685> image {prompt}\nTo generate code, please type the following command:\n<@1049857759643971685> code {prompt}\nNote, the current OpenAI model for code completion just returns a random stack overflow article LOL"
         )
 
 client.run(TOKEN)
