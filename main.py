@@ -9,21 +9,21 @@ openai.api_key = os.getenv("OPENAI_TOKEN")
 
 # splices text to get around discord character limit
 
-def spliceText(message, addFormat=False):
+def spliceText(message, addFormat=False, addCode=""):
     discordCharLimit = 1900  # minus 100 characters just to make sure.
     returnMessages = []
 
     while len(message) > discordCharLimit:
         msgToAppend = message[:discordCharLimit]
         if addFormat:
-            msgToAppend = "```" + msgToAppend + "```"
+            msgToAppend = f"```{addCode} {msgToAppend} ```"
         returnMessages.append(msgToAppend)
         message = message[discordCharLimit:]
 
     if message != "":
         msgToAppend = message
         if addFormat:
-            msgToAppend = "```" + msgToAppend + "```"
+            msgToAppend = f"```{addCode} {msgToAppend} ```"
         returnMessages.append(msgToAppend)
 
     return returnMessages
@@ -50,13 +50,21 @@ def sendTextRequest(message):
 
 def sendCodeRequest(message):
     text = message.split("<@1049857759643971685> code")
+    langs = ["python", "c++", "c", "javascript", "html", "css", "rust", "c#", "java"]
+    codingFormat = ""
+    
+    for lang in langs:
+        if lang in text[1].lower():
+            codingFormat = lang
+            break
+
     response = openai.Completion.create(model="code-davinci-002",
                                         prompt=text[1],
                                         max_tokens=2000,
                                         temperature=0
                                         )
     response = response["choices"][0]["text"]
-    return spliceText(response, True) 
+    return spliceText(response, True, codingFormat) 
 
 def sendImageRequest(message):
     text = message.split("<@1049857759643971685> image")
